@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/map_navigation_botton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -28,9 +28,11 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginBottom="10.4dp"
             android:layout_marginRight="15.2dp"
-            android:src="@drawable/ic_map_navigation_botton" />
+            android:src="@drawable/ic_map_navigation_botton"
+            android:clickable="true"
+            />
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/gps_botton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -38,6 +40,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginBottom="10.4dp"
             android:layout_marginLeft="17dp"
-            android:src="@drawable/ic_gps_button_svg" />
+            android:src="@drawable/ic_gps_button_svg"
+            android:clickable="true"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </android.widget.LinearLayout>
