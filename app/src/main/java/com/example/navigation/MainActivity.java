@@ -37,7 +37,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
 
-    private  boolean trackingMode = true;
+    private boolean trackingMode = true;
     TMapView tMapView = null;
     TMapGpsManager tMapGps = null;
     private String Address;
@@ -52,8 +52,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         FrameLayout tmapLayout = findViewById(R.id.tmapLayout);
         tMapView = new TMapView(this);
 
-        tMapView.setSKTMapApiKey( "\tl7xxa5b961d8570f4cde98fa199aaa572587" );
-        tmapLayout.addView( tMapView );
+        tMapView.setSKTMapApiKey("\tl7xxa5b961d8570f4cde98fa199aaa572587");
+        tmapLayout.addView(tMapView);
 
         tMapView.setCompassMode(true);
 
@@ -68,21 +68,20 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         tMapGps.setMinTime(1000);
         tMapGps.setMinDistance(5);
         tMapGps.setProvider((tMapGps.NETWORK_PROVIDER));
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 1); //위치권한 탐색 허용 관련 내용
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1); //위치권한 탐색 허용 관련 내용
             }
             return;
         }
-        tMapGps.OpenGps();
+//        tMapGps.OpenGps();
 //
-//        tMapView.setTrackingMode(true);
         tMapView.setSightVisible(true);
 
-        ImageButton searchButton = (ImageButton)findViewById(R.id.map_navigation_botton);
-        searchButton.setOnClickListener(new View.OnClickListener(){
+        ImageButton searchButton = (ImageButton) findViewById(R.id.map_navigation_botton);
+        searchButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -106,52 +105,17 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     @Override
     public void onLocationChange(Location location) {
-        if(m_bTrackingMode)
-        {
-            tMapView.setLocationPoint(location.getLongitude(), location.getLatitude());
-            tMapView.setCenterPoint(location.getLongitude(), location.getLatitude());
 
-            getCurrent_long = location.getLongitude();
-            getCurrent_lat = location.getLatitude();
+        tMapView.setLocationPoint(location.getLongitude(), location.getLatitude());
+        tMapView.setCenterPoint(location.getLongitude(), location.getLatitude());
 
-            Current_Point = new TMapPoint(getCurrent_lat, getCurrent_long);
+        getCurrent_long = location.getLongitude();
+        getCurrent_lat = location.getLatitude();
 
-            Log.d("getCurrent_lat : ", ""+getCurrent_lat);
-            Log.d("getCurrent_long : ", ""+getCurrent_long);
-        }
-    }
+        Current_Point = new TMapPoint(getCurrent_lat, getCurrent_long);
 
-    public void ClickDestination() {
-        Toast.makeText(MainActivity.this, "원하시는 도착 지점을 터치한 후 길안내 시작버튼을 눌러주세요.", Toast.LENGTH_SHORT).show();
-
-        tMapView.setOnClickListenerCallBack(new TMapView.OnClickListenerCallback() {
-            @Override
-            public boolean onPressEvent(ArrayList<TMapMarkerItem> arrayList,
-                                        ArrayList<TMapPOIItem> arrayList1, TMapPoint tMapPoint, PointF pointF) {
-
-                TMapData tMapData = new TMapData();
-                tMapData.convertGpsToAddress(tMapPoint.getLatitude(), tMapPoint.getLongitude(),
-                        new TMapData.ConvertGPSToAddressListenerCallback() {
-                            @Override
-                            public void onConvertToGPSToAddress(String strAddress) {
-                                Address = strAddress;
-                                Log.d("선택한 위치의 주소는 ", strAddress);
-                            }
-                        });
-
-                Toast.makeText(MainActivity.this, "선택하신 위치의 주소는 " + Address + " 입니다.", Toast.LENGTH_SHORT).show();
-
-                return false;
-            }
-
-            @Override
-            public boolean onPressUpEvent(ArrayList<TMapMarkerItem> arrayList,
-                                          ArrayList<TMapPOIItem> arrayList1, TMapPoint tMapPoint, PointF pointF) {
-                Destination_Point = tMapPoint;
-
-                return false;
-            }
-        });
+        Log.d("getCurrent_lat : ", "" + getCurrent_lat);
+        Log.d("getCurrent_long : ", "" + getCurrent_long);
 
     }
 
@@ -173,45 +137,45 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 tMapData.findAllPOI(strData, new TMapData.FindAllPOIListenerCallback() {
                     @Override
                     public void onFindAllPOI(ArrayList<TMapPOIItem> poiItem) {
-                        for(int i=0; i<poiItem.size(); i++){
+                        for (int i = 0; i < poiItem.size(); i++) {
                             TMapPOIItem item = poiItem.get(i);
 
                             Log.e("POI Name: ", item.getPOIName().toString());
-                            Log.e(        "Address: ", item.getPOIAddress().replace("null", ""));
+                            Log.e("Address: ", item.getPOIAddress().replace("null", ""));
                             Log.e("Point: ", item.getPOIPoint().toString());
 
                             Address = item.getPOIAddress();
                             Destination_Point = item.getPOIPoint();
 
                         }
+                        tMapView.setTrackingMode(true);
+                        tMapView.removeTMapPath();
+
+                        TMapPoint point1 = tMapView.getLocationPoint();
+                        TMapPoint point2 = Destination_Point;
+
+                        Log.e("point1 :", point1.toString());
+                        Log.e("point2 :", point2.toString());
+
+                        TMapData tmapdata = new TMapData();
+
+                        tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, point1, point2, new TMapData.FindPathDataListenerCallback() {
+                            @Override
+                            public void onFindPathData(TMapPolyLine polyLine) {
+                                polyLine.setLineColor(Color.BLUE);
+                                tMapView.addTMapPath(polyLine);
+                            }
+                        });
+
+                        Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
+                        Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
+                        tMapView.setTMapPathIcon(start, end);
+
+                        tMapView.zoomToTMapPoint(point1, point2);
                     }
                 });
-//                tMapView.removeTMapPath();
-////
-//                setTrackingMode(m_bTrackingMode);
-//
-//                TMapPoint point1 = tMapView.getLocationPoint();
-//                TMapPoint point2 = Destination_Point;
-//
-//                TMapData tmapdata = new TMapData();
-//
-//                tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, point1, point2, new TMapData.FindPathDataListenerCallback() {
-//                    @Override
-//                    public void onFindPathData(TMapPolyLine polyLine) {
-//                        polyLine.setLineColor(Color.BLUE);
-//                        tMapView.addTMapPath(polyLine);
-//                    }
-//                });
-//
-//                Bitmap start = BitmapFactory.decodeResource(mContext.getResources(),R.drawable.poi_start);
-//                Bitmap end = BitmapFactory.decodeResource(mContext.getResources(),R.drawable.poi_end);
-//                tMapView.setTMapPathIcon(start, end);
-//
-//                tMapView.zoomToTMapPoint(point1, point2);
-
             }
         });
-
         Toast.makeText(this, "입력하신 주소는 " + Address + " 입니다.", Toast.LENGTH_SHORT).show();
         builder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
             @Override
@@ -220,34 +184,5 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
         });
         builder.show();
-    }
-//
-//    public void StartGuidance() {
-//        tMapView.removeTMapPath();
-//
-//        tMapView.setTrackingMode(true);
-//
-//        TMapPoint point1 = tMapView.getLocationPoint();
-//        TMapPoint point2 = Destination_Point;
-//
-//        TMapData tmapdata = new TMapData();
-//
-//        tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, point1, point2, new TMapData.FindPathDataListenerCallback() {
-//            @Override
-//            public void onFindPathData(TMapPolyLine polyLine) {
-//                polyLine.setLineColor(Color.BLUE);
-//                tMapView.addTMapPath(polyLine);
-//            }
-//        });
-//
-//        Bitmap start = BitmapFactory.decodeResource(mContext.getResources(),R.drawable.poi_start);
-//        Bitmap end = BitmapFactory.decodeResource(mContext.getResources(),R.drawable.poi_end);
-//        tMapView.setTMapPathIcon(start, end);
-//
-//        tMapView.zoomToTMapPoint(point1, point2);
-//    }
-
-    public void setTrackingMode(boolean m_bTrackingMode) {
-        tMapView.setTrackingMode(m_bTrackingMode);
     }
 }
