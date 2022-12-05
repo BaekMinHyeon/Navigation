@@ -37,6 +37,10 @@ import com.skt.Tmap.TMapPolyLine;
 import com.skt.Tmap.TMapView;
 import com.skt.Tmap.poi_item.TMapPOIItem;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private EditText editSearch;        // 검색어를 입력할 Input 창
     private Button searchbutton;
     private SearchAdapter adapter;      // 리스트뷰에 연결할 아답터
+
+    private Alarm alarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +105,16 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 SearchDestination();
             }
         });
+
+        alarm = new Alarm();
+        new Thread(() -> {
+            try {
+                alarm.accident();
+            } catch (IOException e) {
+                Log.e("11111111",e.toString());
+                e.printStackTrace();
+            }
+        }).start();
     }
 
 
