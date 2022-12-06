@@ -2,22 +2,33 @@ package com.example.navigation;
 
 import android.util.Log;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 public class Alarm {
     public void accident() throws IOException {
-        StringBuilder urlBuilder = new StringBuilder("http://www.utic.go.kr/guide/imsOpenData.do?key=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*URL*/
-        urlBuilder.append("?" + URLEncoder.encode("ServiceKey","UTF-8") + "=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*Service Key*/
-////        urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
-////        urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지 번호*/
-////        urlBuilder.append("&" + URLEncoder.encode("stationName","UTF-8") + "=" + URLEncoder.encode("수내동", "UTF-8")); /*측정소 이름*/
-////        urlBuilder.append("&" + URLEncoder.encode("dataTerm","UTF-8") + "=" + URLEncoder.encode("DAILY", "UTF-8")); /*요청 데이터기간 (하루 : DAILY, 한달 : MONTH, 3달 : 3MONTH)*/
-////        urlBuilder.append("&" + URLEncoder.encode("ver","UTF-8") + "=" + URLEncoder.encode("1.3", "UTF-8")); /*버전별 상세 결과 참고문서 참조*/
+        StringBuilder urlBuilder = new StringBuilder("http://www.utic.go.kr/guide/imsOpenData.do"); /*URL*/
+        urlBuilder.append("?" + URLEncoder.encode("key","UTF-8") + "=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*Service Key*/
         URL url = new URL(urlBuilder.toString());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -37,6 +48,55 @@ public class Alarm {
         rd.close();
         conn.disconnect();
         Log.e("민현이", sb.toString());
+
+        ArrayList<Object> list_x = new ArrayList<Object>();
+        ArrayList<Object> list_y = new ArrayList<Object>();
+        List<HashMap<String, String>> list = null;
+        try {
+            list = getResultMap(sb.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for(Map<String,String> tmpMap : list) {
+            Log.e("길이", String.valueOf(list.size()));
+            list_x.add(tmpMap.get("locationDataX"));
+            list_y.add(tmpMap.get("locationDataY"));
+        }
+        for(int i = 0; i < list_x.size(); i++){
+            Log.e("x좌표", list_x.get(i).toString());
+            Log.e("y좌표", list_y.get(i).toString());
+        }
     }
+
+    public static List<HashMap<String, String>> getResultMap(String data) throws Exception {
+
+        //결과값을 넣어줄 map을 선언해줍니다.
+        List<HashMap<String, String>> resultMap = new LinkedList<HashMap<String, String>>();
+
+        InputSource is = new InputSource(new StringReader(data));
+
+        //Document 클래스로 xml데이터를 취득합니다.
+        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
+
+        //xPath 팩토리로 객체를 만듭니다.
+        XPath xpath = XPathFactory.newInstance().newXPath();
+
+        //xPath를 컴파일한 후에 node단위로 데이터를 수집합니다.
+        NodeList nodeList = (NodeList) xpath.compile("/result/record").evaluate(document, XPathConstants.NODESET);
+        int nodeListCount = nodeList.getLength();
+        for (int i = 0; i < nodeListCount; i++) {
+            NodeList childNode = nodeList.item(i).getChildNodes();
+            HashMap<String, String> nodeMap = new HashMap<String, String>();
+            int childNodeCount = childNode.getLength();
+            for (int j = 0; j < childNodeCount; j++) {
+                nodeMap.put(childNode.item(j).getNodeName(), childNode.item(j).getTextContent());
+            }
+            resultMap.add(nodeMap);
+        }
+        return resultMap;
+    }
+
+
 
 }
