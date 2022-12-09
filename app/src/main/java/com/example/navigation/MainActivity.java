@@ -31,7 +31,6 @@ import com.skt.Tmap.poi_item.TMapPOIItem;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,7 +38,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
 
@@ -59,11 +61,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private String des;
     private Alarm alarm;
 
+    private TMapPoint my_location;
+    private TMapPoint destination;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         FrameLayout tmapLayout = findViewById(R.id.tmapLayout);
+
         tMapView = new TMapView(this);
 //
         tMapView.setSKTMapApiKey("\tl7xxa5b961d8570f4cde98fa199aaa572587");
@@ -103,33 +109,38 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
         });
 
-        alarm = new Alarm();
-        new Thread(() -> {
-            try {
-                alarm.accident();
-            } catch (IOException e) {
-                Log.e("11111111",e.toString());
-                e.printStackTrace();
+        alarm = new Alarm(null);
+
+        AtomicBoolean accident = new AtomicBoolean(false);
+        Thread alarmThread = new Thread()
+        {
+            public void run() {
+                try {
+                    accident.set(alarm.accident());
+                } catch (IOException e) {
+                    Log.e("11111111", e.toString());
+                    e.printStackTrace();
+                }
             }
-        }).start();
+        };
+        alarmThread.start();
+        try {
+            alarmThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if(accident.get()) {
+            Log.e("이준구", "이준구");
+            dialog();
+        }
     }
-
-
-//    public void onClick(View v) {
-//        switch (v.getId()) {
-//            case R.id.map_navigation_botton   :   ClickDestination();  break;
-//            //case R.id.btnSearchDestination  :   SearchDestination(); break;
-////            case R.id.btnStartGuidance      :   StartGuidance();     break;
-//        }
-//    }
 
 
     TMapPoint Current_Point;
     double getCurrent_long;
     double getCurrent_lat;
 
-
-    //
     @Override
     public void onLocationChange(Location location) {
 
@@ -182,15 +193,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                             tMapView.setTrackingMode(true);
                             tMapView.removeTMapPath();
 
-                            TMapPoint point1 = tMapView.getLocationPoint();
-                            TMapPoint point2 = Destination_Point;
+                            TMapPoint my_location = tMapView.getLocationPoint();
+                            TMapPoint destination = Destination_Point;
 
-                            Log.e("point1 :", point1.toString());
-                            Log.e("point2 :", point2.toString());
+                            Log.e("point1 :", my_location.toString());
+                            Log.e("point2 :", destination.toString());
 
                             TMapData tmapdata = new TMapData();
 
-                            tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, point1, point2, new TMapData.FindPathDataListenerCallback() {
+                            tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, my_location, destination, new TMapData.FindPathDataListenerCallback() {
                                 @Override
                                 public void onFindPathData(TMapPolyLine polyLine) {
                                     polyLine.setLineColor(Color.BLUE);
@@ -203,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                             Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
                             tMapView.setTMapPathIcon(start, end);
 
-                            tMapView.zoomToTMapPoint(point1, point2);
+                            tMapView.zoomToTMapPoint(my_location, destination);
 
                             search.setVisibility(View.GONE);
                         }
@@ -246,6 +257,42 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                         }
                     }
                 });
+            }
+        });
+    }
+
+
+    public void dialog(){
+        ConstraintLayout alarm_dialog = (ConstraintLayout) findViewById(R.id.alarm_dialog);
+        alarm_dialog.setVisibility(View.VISIBLE);
+
+        Button alarm_button_yes = (Button) findViewById(R.id.alarm_button_yes);
+        alarm_button_yes.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                TMapData tmapdata = new TMapData();
+                my_location = tMapView.getLocationPoint();
+
+                HashMap pathInfo = new HashMap();
+                pathInfo.put("rStName", "출발지");
+                pathInfo.put("rStlat", my_location.getLatitude());
+                pathInfo.put("rStlon", my_location.getLongitude());
+                pathInfo.put("rGoName", "도착지");
+                pathInfo.put("rGolat", destination.getLatitude());
+                pathInfo.put("rGolon", destination.getLongitude());
+                pathInfo.put("type", "arrival");
+                Date currentTime = new Date();
+                tmapdata.findTimeMachineCarPath(pathInfo,  currentTime, null, "00");
+            }
+        });
+
+        Button alarm_button_no = (Button) findViewById(R.id.alarm_button_no);
+        alarm_button_no.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                alarm_dialog.setVisibility(View.GONE);
             }
         });
     }
@@ -306,81 +353,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         thread.start();
 
     }
-
-
-
-//        editSearch.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//
-//            }
-//
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//
-//            }
-//
-//            @Override
-//            public void afterTextChanged(Editable s) {
-//                String text = editSearch.getText().toString();
-//                TMapData tMapData = new TMapData();
-//
-//                tMapData.findAllPOI(text, new TMapData.FindAllPOIListenerCallback() {
-//                    @Override
-//                    public void onFindAllPOI(ArrayList<TMapPOIItem> poiItem) {
-//                        if(poiItem != null) {
-//                            list.clear();
-//
-//                            for (int i = 0; i < poiItem.size(); i++) {
-//                                TMapPOIItem item = poiItem.get(i);
-//
-//                                Log.e("POI Name: ", item.getPOIName().toString());
-//                                Log.e("Address: ", item.getPOIAddress().replace("null", ""));
-//                                Log.e("Point: ", item.getPOIPoint().toString());
-//
-//                                Address = item.getPOIAddress();
-//                                Destination_Point = item.getPOIPoint();
-//                                list.add(item.getPOIName());
-//
-//                            }
-//                            Log.e("asdasdasd : ", ""+adapter.getCount());
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    adapter.notifyDataSetChanged();
-//                                }
-//                            });
-//                        }
-//
-////                        tMapView.setTrackingMode(true);
-////                        tMapView.removeTMapPath();
-////
-////                        TMapPoint point1 = tMapView.getLocationPoint();
-////                        TMapPoint point2 = Destination_Point;
-////
-////                        Log.e("point1 :", point1.toString());
-////                        Log.e("point2 :", point2.toString());
-////
-////                        TMapData tmapdata = new TMapData();
-////
-////                        tmapdata.findPathDataWithType(TMapData.TMapPathType.CAR_PATH, point1, point2, new TMapData.FindPathDataListenerCallback() {
-////                            @Override
-////                            public void onFindPathData(TMapPolyLine polyLine) {
-////                                polyLine.setLineColor(Color.BLUE);
-////                                tMapView.addTMapPath(polyLine);
-////                            }
-////                        });
-////
-////                        Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
-////                        Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
-////                        tMapView.setTMapPathIcon(start, end);
-////
-////                        tMapView.zoomToTMapPoint(point1, point2);
-//                    }
-//                });
-//            }
-//        });
-//    }
 }
 
 
