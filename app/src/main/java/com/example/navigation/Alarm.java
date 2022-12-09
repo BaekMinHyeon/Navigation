@@ -72,15 +72,20 @@ public class Alarm {
             list_x.add(tmpMap.get("locationDataX"));
             list_y.add(tmpMap.get("locationDataY"));
         }
-        for(int i = 0; i < list_x.size(); i++){
-            Log.e("x좌표", list_x.get(i).toString());
-            Log.e("y좌표", list_y.get(i).toString());
-        }
 
-        return passAccident();
+            Log.e("x좌표", list_x.get(0).toString());
+            Log.e("y좌표", list_y.get(0).toString());
+
+
+        return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
     }
 
-    public boolean passAccident(){
+    public boolean passAccident(double x, double y){
+        for(TMapPoint p : saveRoutePoint){
+            if((x-0.00001) < p.getLatitude() && (x+0.00001) > p.getLatitude() && (y-0.00001) < p.getLongitude() && (y+0.00001) > p.getLongitude()){
+                return true;
+            }
+        }
         return true;
     }
 
