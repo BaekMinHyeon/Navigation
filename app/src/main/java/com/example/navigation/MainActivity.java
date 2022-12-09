@@ -1,23 +1,14 @@
 package com.example.navigation;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PointF;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,20 +18,26 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.skt.Tmap.TMapData;
 import com.skt.Tmap.TMapGpsManager;
-import com.skt.Tmap.TMapMarkerItem;
 import com.skt.Tmap.TMapPoint;
 import com.skt.Tmap.TMapPolyLine;
 import com.skt.Tmap.TMapView;
 import com.skt.Tmap.poi_item.TMapPOIItem;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private EditText editSearch;        // 검색어를 입력할 Input 창
     private Button searchbutton;
     private SearchAdapter adapter;      // 리스트뷰에 연결할 아답터
-
+    private String des;
     private Alarm alarm;
 
     @Override
@@ -93,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
             return;
         }
-//        tMapGps.OpenGps();
+        tMapGps.OpenGps();
 //
         tMapView.setSightVisible(true);
 
@@ -172,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.e("장소 ", list.get(position));
+                des = list.get(position);
                 tMapData.findAllPOI(list.get(position), new TMapData.FindAllPOIListenerCallback() {
 
                     @Override
@@ -199,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                     tMapView.addTMapPath(polyLine);
                                 }
                             });
+                            getJsonData(point1, point2);
 
                             Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
                             Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
@@ -250,6 +249,65 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
         });
     }
+
+
+    public void getJsonData(TMapPoint startPoint, TMapPoint endPoint)
+    {
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                //String urlString = "https://apis.skplanetx.com/tmap/routes/bicycle?callback=&bizAppId=&version=1";
+                String urlString = "https://apis.openapi.sk.com/tmap/jsv2?version=1&format=javascript&appKey=l7xxa5b961d8570f4cde98fa199aaa572587";
+                //String urlString = "https://apis.skplanetx.com/tmap/routes/pedestrian?callback=&bizAppId=&version=1&format=json&appKey=e2a7df79-5bc7-3f7f-8bca-2d335a0526e7";
+
+                TMapPolyLine jsonPolyline = new TMapPolyLine();
+                jsonPolyline.setLineColor(Color.RED);
+                jsonPolyline.setLineWidth(2);
+
+                HttpURLConnection conn = null;
+                JSONObject responseJson = null;
+                // &format={xml 또는 json}
+                try {
+                    Log.e("들어갔니?", "??");
+                    URL url = new URL(urlString);
+                    conn = (HttpURLConnection)url.openConnection();
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    conn.setRequestMethod("GET");
+
+
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == 400 || responseCode == 401 || responseCode == 500 ) {
+                        Log.e("error", (responseCode + " Error!"));
+                    } else {
+                        BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                        StringBuilder sb = new StringBuilder();
+                        String line = "";
+                        while ((line = br.readLine()) != null) {
+                            sb.append(line);
+                        }
+                        responseJson = new JSONObject(sb.toString());
+                        Log.e("json파일", responseJson.toString());
+                    }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    Log.e("exception", "not JSON Format response");
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        };
+
+        thread.start();
+
+    }
+
+
 
 //        editSearch.addTextChangedListener(new TextWatcher() {
 //            @Override
