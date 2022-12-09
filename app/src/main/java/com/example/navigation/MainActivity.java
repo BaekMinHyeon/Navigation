@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
 import com.skt.Tmap.TMapData;
@@ -31,16 +32,23 @@ import com.skt.Tmap.poi_item.TMapPOIItem;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
@@ -208,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                     tMapView.addTMapPath(polyLine);
                                 }
                             });
-                            getJsonData(point1, point2);
+                            getJsonData(my_location, destination);
 
                             Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
                             Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
@@ -303,6 +311,14 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         Thread thread = new Thread() {
             @Override
             public void run() {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+
+                        // Stuff that updates the UI
+
+
                 //String urlString = "https://apis.skplanetx.com/tmap/routes/bicycle?callback=&bizAppId=&version=1";
                 String urlString = "https://apis.openapi.sk.com/tmap/jsv2?version=1&format=javascript&appKey=l7xxa5b961d8570f4cde98fa199aaa572587";
                 //String urlString = "https://apis.skplanetx.com/tmap/routes/pedestrian?callback=&bizAppId=&version=1&format=json&appKey=e2a7df79-5bc7-3f7f-8bca-2d335a0526e7";
@@ -320,7 +336,26 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                     conn = (HttpURLConnection)url.openConnection();
                     conn.setConnectTimeout(5000);
                     conn.setReadTimeout(5000);
-                    conn.setRequestMethod("GET");
+                    conn.setRequestMethod("POST");
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    HashMap<String, String> namevalue = new HashMap<>();
+                    namevalue.put("startX", Double.toString(startPoint.getLongitude()));
+                    namevalue.put("startY", Double.toString(startPoint.getLatitude()));
+                    namevalue.put("endX", Double.toString(endPoint.getLongitude()));
+                    namevalue.put("endY", Double.toString(endPoint.getLatitude()));
+                    namevalue.put("reqCoordType", "WGS84GEO");
+                    namevalue.put("resCoordType", "WGS84GEO");
+                    namevalue.put("startName", "출발지");
+                    namevalue.put("endName", des);
+                    OutputStream os = conn.getOutputStream();
+                    BufferedWriter writer = new BufferedWriter(
+                            new OutputStreamWriter(os, "UTF-8"));
+                    writer.write(getPostDataString(namevalue));
+
+                    writer.flush();
+                    writer.close();
+                    os.close();
 
 
                     int responseCode = conn.getResponseCode();
@@ -347,11 +382,32 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                     e.printStackTrace();
                 }
 
+                    }
+                });
+
             }
+
         };
 
         thread.start();
 
+    }
+
+    private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            if (first)
+                first = false;
+            else
+                result.append("&");
+
+            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
+
+        return result.toString();
     }
 }
 
