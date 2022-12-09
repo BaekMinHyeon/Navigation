@@ -10,9 +10,12 @@
         <entry key="app/src/main/res/drawable-v24/navigation_end_button.xml" value="0.185" />
         <entry key="app/src/main/res/drawable/ic_gps_button_svg.xml" value="0.166" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.185" />
+        <entry key="app/src/main/res/drawable/ic_map_navigation_botton.xml" value="0.1535" />
         <entry key="app/src/main/res/drawable/ic_search_button.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/ic_search_loding_svg.xml" value="0.1535" />
         <entry key="app/src/main/res/drawable/navigation_start_button.xml" value="0.185" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.24510345458984376" />
+        <entry key="app/src/main/res/layout/alarm_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/map_search_main.xml" value="0.27395833333333336" />
         <entry key="app/src/main/res/layout/navigation_main.xml" value="0.27395833333333336" />
         <entry key="app/src/main/res/layout/row_listview.xml" value="0.196875" />

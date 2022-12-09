@@ -2,6 +2,8 @@ package com.example.navigation;
 
 import android.util.Log;
 
+import com.skt.Tmap.TMapPoint;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -26,7 +28,14 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
 public class Alarm {
-    public void accident() throws IOException {
+
+    public ArrayList<TMapPoint> saveRoutePoint;
+
+    public Alarm(ArrayList<TMapPoint> saveRoutePoint){
+        this.saveRoutePoint = saveRoutePoint;
+    }
+
+    public boolean accident() throws IOException {
         StringBuilder urlBuilder = new StringBuilder("http://www.utic.go.kr/guide/imsOpenData.do"); /*URL*/
         urlBuilder.append("?" + URLEncoder.encode("key","UTF-8") + "=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*Service Key*/
         URL url = new URL(urlBuilder.toString());
@@ -67,6 +76,12 @@ public class Alarm {
             Log.e("x좌표", list_x.get(i).toString());
             Log.e("y좌표", list_y.get(i).toString());
         }
+
+        return passAccident();
+    }
+
+    public boolean passAccident(){
+        return true;
     }
 
     public static List<HashMap<String, String>> getResultMap(String data) throws Exception {
