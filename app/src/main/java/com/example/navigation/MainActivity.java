@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
@@ -108,31 +110,46 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
         });
 
-        alarm = new Alarm(tPoints);
+        int sleepSec = 10;
 
-        AtomicBoolean accident = new AtomicBoolean(false);
-        Thread alarmThread = new Thread() {
-            public void run() {
+        // 주기적인 작업을 위한
+        final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+        exec.scheduleAtFixedRate(new Runnable(){
+            public void run(){
                 try {
-                    accident.set(alarm.accident());
-                } catch (IOException e) {
-                    Log.e("11111111", e.toString());
+                    alarm = new Alarm(tPoints);
+                    AtomicBoolean accident = new AtomicBoolean(false);
+                    Thread alarmThread = new Thread() {
+                        public void run() {
+                            try {
+                                accident.set(alarm.accident());
+                            } catch (IOException e) {
+                                Log.e("11111111", e.toString());
+                                e.printStackTrace();
+                            }
+                        }
+                    };
+                    Log.e("상태", alarmThread.getState().toString());
+                    if(alarmThread.getState() == Thread.State.NEW)
+                        alarmThread.start();
+                    try {
+                        alarmThread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (accident.get()) {
+                        Log.e("이준구", "이준구");
+                        dialog();
+                    }
+
+                } catch (Exception e) {
+
                     e.printStackTrace();
+
                 }
             }
-        };
-        alarmThread.start();
-        Log.e("테스트", "ㅗㅑ");
-        try {
-            alarmThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        if (accident.get()) {
-            Log.e("이준구", "이준구");
-            dialog();
-        }
+        }, 0, sleepSec, TimeUnit.SECONDS);
     }
 
 
