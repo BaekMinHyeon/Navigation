@@ -30,25 +30,11 @@ import com.skt.Tmap.TMapPolyLine;
 import com.skt.Tmap.TMapView;
 import com.skt.Tmap.poi_item.TMapPOIItem;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements TMapGpsManager.onLocationChangedCallback {
@@ -72,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private TMapPoint my_location;
     private TMapPoint destination;
 
+    private ArrayList<TMapPoint> tPoints = null;
     public boolean alarming = false;
     public Thread alarmThread;
     AtomicBoolean accident;
@@ -120,6 +107,32 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 SearchDestination();
             }
         });
+
+        alarm = new Alarm(tPoints);
+
+        AtomicBoolean accident = new AtomicBoolean(false);
+        Thread alarmThread = new Thread() {
+            public void run() {
+                try {
+                    accident.set(alarm.accident());
+                } catch (IOException e) {
+                    Log.e("11111111", e.toString());
+                    e.printStackTrace();
+                }
+            }
+        };
+        alarmThread.start();
+        Log.e("테스트", "ㅗㅑ");
+        try {
+            alarmThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (accident.get()) {
+            Log.e("이준구", "이준구");
+            dialog();
+        }
     }
 
 
@@ -163,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             TMapData tMapData = new TMapData();
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.e("장소 ", list.get(position));
@@ -171,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
                     @Override
                     public void onFindAllPOI(ArrayList<TMapPOIItem> poiItem) {
-                        if(poiItem != null) {
+                        if (poiItem != null) {
                             for (int i = 0; i < poiItem.size(); i++) {
                                 Address = poiItem.get(i).getPOIAddress();
                                 Destination_Point = poiItem.get(i).getPOIPoint();
@@ -192,9 +206,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                 public void onFindPathData(TMapPolyLine polyLine) {
                                     polyLine.setLineColor(Color.BLUE);
                                     tMapView.addTMapPath(polyLine);
+                                    tPoints = polyLine.getLinePoint();
+                                    for (TMapPoint tpoint: tPoints) {
+                                        double latitude = tpoint.getLatitude(); // y좌표
+                                        double longitude = tpoint.getLongitude(); // x좌표
+                                        Log.e("x좌표", Double.toString(longitude));
+                                        Log.e("y좌표", Double.toString(latitude));
+                                    }
                                 }
                             });
-                            getJsonData(my_location, destination);
 
                             alarm = new Alarm(null);
                             accident = new AtomicBoolean(false);
@@ -272,12 +292,12 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     }
 
 
-    public void dialog(){
+    public void dialog() {
         ConstraintLayout alarm_dialog = (ConstraintLayout) findViewById(R.id.alarm_dialog);
         alarm_dialog.setVisibility(View.VISIBLE);
 
         Button alarm_button_yes = (Button) findViewById(R.id.alarm_button_yes);
-        alarm_button_yes.setOnClickListener(new View.OnClickListener(){
+        alarm_button_yes.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -293,12 +313,12 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 pathInfo.put("rGolon", destination.getLongitude());
                 pathInfo.put("type", "arrival");
                 Date currentTime = new Date();
-                tmapdata.findTimeMachineCarPath(pathInfo,  currentTime, null, "00");
+                tmapdata.findTimeMachineCarPath(pathInfo, currentTime, null, "00");
             }
         });
 
         Button alarm_button_no = (Button) findViewById(R.id.alarm_button_no);
-        alarm_button_no.setOnClickListener(new View.OnClickListener(){
+        alarm_button_no.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -308,110 +328,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
         });
     }
 
-
-    public void getJsonData(TMapPoint startPoint, TMapPoint endPoint)
-    {
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-
-                        // Stuff that updates the UI
-
-
-                //String urlString = "https://apis.skplanetx.com/tmap/routes/bicycle?callback=&bizAppId=&version=1";
-                String urlString = "https://apis.openapi.sk.com/tmap/jsv2?version=1&format=javascript&appKey=l7xxa5b961d8570f4cde98fa199aaa572587";
-                //String urlString = "https://apis.skplanetx.com/tmap/routes/pedestrian?callback=&bizAppId=&version=1&format=json&appKey=e2a7df79-5bc7-3f7f-8bca-2d335a0526e7";
-
-                TMapPolyLine jsonPolyline = new TMapPolyLine();
-                jsonPolyline.setLineColor(Color.RED);
-                jsonPolyline.setLineWidth(2);
-
-                HttpURLConnection conn = null;
-                JSONObject responseJson = null;
-                // &format={xml 또는 json}
-                try {
-                    Log.e("들어갔니?", "??");
-                    URL url = new URL(urlString);
-                    conn = (HttpURLConnection)url.openConnection();
-                    conn.setConnectTimeout(5000);
-                    conn.setReadTimeout(5000);
-                    conn.setRequestMethod("POST");
-                    conn.setDoInput(true);
-                    conn.setDoOutput(true);
-                    HashMap<String, String> namevalue = new HashMap<>();
-                    namevalue.put("startX", Double.toString(startPoint.getLongitude()));
-                    namevalue.put("startY", Double.toString(startPoint.getLatitude()));
-                    namevalue.put("endX", Double.toString(endPoint.getLongitude()));
-                    namevalue.put("endY", Double.toString(endPoint.getLatitude()));
-                    namevalue.put("reqCoordType", "WGS84GEO");
-                    namevalue.put("resCoordType", "WGS84GEO");
-                    namevalue.put("startName", "출발지");
-                    namevalue.put("endName", des);
-                    OutputStream os = conn.getOutputStream();
-                    BufferedWriter writer = new BufferedWriter(
-                            new OutputStreamWriter(os, "UTF-8"));
-                    writer.write(getPostDataString(namevalue));
-
-                    writer.flush();
-                    writer.close();
-                    os.close();
-
-
-                    int responseCode = conn.getResponseCode();
-                    if (responseCode == 400 || responseCode == 401 || responseCode == 500 ) {
-                        Log.e("error", (responseCode + " Error!"));
-                    } else {
-                        BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                        StringBuilder sb = new StringBuilder();
-                        String line = "";
-                        while ((line = br.readLine()) != null) {
-                            sb.append(line);
-                        }
-                        responseJson = new JSONObject(sb.toString());
-                        Log.e("json파일", responseJson.toString());
-                    }
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (JSONException e) {
-                    Log.e("exception", "not JSON Format response");
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                    }
-                });
-
-            }
-
-        };
-
-        thread.start();
-
-    }
-
-    private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        for(Map.Entry<String, String> entry : params.entrySet()){
-            if (first)
-                first = false;
-            else
-                result.append("&");
-
-            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-        }
-
-        return result.toString();
-    }
 }
 
 
