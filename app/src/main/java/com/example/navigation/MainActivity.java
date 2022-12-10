@@ -59,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private TMapPoint destination;
 
     private ArrayList<TMapPoint> tPoints = null;
+    public boolean alarming = false;
+    public Thread alarmThread;
+    AtomicBoolean accident;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +95,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
             return;
         }
-        tMapGps.OpenGps();
-//
+//        tMapGps.OpenGps();
+
         tMapView.setSightVisible(true);
 
         ImageButton searchButton = (ImageButton) findViewById(R.id.map_navigation_botton);
@@ -213,6 +216,30 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                 }
                             });
 
+                            alarm = new Alarm(null);
+                            accident = new AtomicBoolean(false);
+                            alarmThread = new Thread()
+                            {
+                                public void run() {
+                                    try {
+                                        accident.set(alarm.accident());
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (!alarming && accident.get()) {
+                                                    Log.e("이준구", "이준구");
+                                                    alarming = true;
+                                                    dialog();
+                                                }
+                                            }
+                                        });
+                                    } catch (IOException e) {
+                                        Log.e("11111111", e.toString());
+                                        e.printStackTrace();
+                                    }
+                                }
+                            };
+                            alarmThread.start();
                             Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
                             Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
                             tMapView.setTMapPathIcon(start, end);
@@ -296,6 +323,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             @Override
             public void onClick(View v) {
                 alarm_dialog.setVisibility(View.GONE);
+                alarming = false;
             }
         });
     }
