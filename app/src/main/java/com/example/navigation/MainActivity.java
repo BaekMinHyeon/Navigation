@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
             return;
         }
-//        tMapGps.OpenGps();
+        tMapGps.OpenGps();
 
         tMapView.setSightVisible(true);
 
@@ -110,46 +110,14 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
         });
 
-        int sleepSec = 10;
-
-        // 주기적인 작업을 위한
-        final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
-        exec.scheduleAtFixedRate(new Runnable(){
-            public void run(){
-                try {
-                    alarm = new Alarm(tPoints);
-                    AtomicBoolean accident = new AtomicBoolean(false);
-                    Thread alarmThread = new Thread() {
-                        public void run() {
-                            try {
-                                accident.set(alarm.accident());
-                            } catch (IOException e) {
-                                Log.e("11111111", e.toString());
-                                e.printStackTrace();
-                            }
-                        }
-                    };
-                    Log.e("상태", alarmThread.getState().toString());
-                    if(alarmThread.getState() == Thread.State.NEW)
-                        alarmThread.start();
-                    try {
-                        alarmThread.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (accident.get()) {
-                        Log.e("이준구", "이준구");
-                        dialog();
-                    }
-
-                } catch (Exception e) {
-
-                    e.printStackTrace();
-
-                }
+        ImageButton gpsbutton = (ImageButton) findViewById(R.id.gps_botton);
+        gpsbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tMapView.setTrackingMode(true);
+                tMapView.setSightVisible(true);
             }
-        }, 0, sleepSec, TimeUnit.SECONDS);
+        });
     }
 
 
@@ -191,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
         searchbutton = (Button) findViewById(R.id.search_button);
 
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             TMapData tMapData = new TMapData();
 
@@ -210,8 +179,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                             tMapView.setTrackingMode(true);
                             tMapView.removeTMapPath();
 
-                            TMapPoint my_location = tMapView.getLocationPoint();
-                            TMapPoint destination = Destination_Point;
+                            my_location = tMapView.getLocationPoint();
+                            destination = Destination_Point;
 
                             Log.e("point1 :", my_location.toString());
                             Log.e("point2 :", destination.toString());
@@ -224,45 +193,55 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                     polyLine.setLineColor(Color.BLUE);
                                     tMapView.addTMapPath(polyLine);
                                     tPoints = polyLine.getLinePoint();
-                                    for (TMapPoint tpoint: tPoints) {
-                                        double latitude = tpoint.getLatitude(); // y좌표
-                                        double longitude = tpoint.getLongitude(); // x좌표
-                                        Log.e("x좌표", Double.toString(longitude));
-                                        Log.e("y좌표", Double.toString(latitude));
-                                    }
                                 }
                             });
 
-                            alarm = new Alarm(null);
-                            accident = new AtomicBoolean(false);
-                            alarmThread = new Thread()
-                            {
-                                public void run() {
+                            int sleepSec = 10;
+
+                            // 주기적인 작업을 위한
+                            final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
+                            exec.scheduleWithFixedDelay(new Runnable(){
+                                public void run(){
                                     try {
-                                        accident.set(alarm.accident());
-                                        runOnUiThread(new Runnable() {
-                                            @Override
+                                        alarm = new Alarm(tPoints);
+                                        Log.e("test", tPoints.toString());
+                                        accident = new AtomicBoolean(false);
+                                        Thread alarmThread = new Thread() {
                                             public void run() {
-                                                if (!alarming && accident.get()) {
-                                                    Log.e("이준구", "이준구");
-                                                    alarming = true;
-                                                    dialog();
+                                                try {
+                                                    accident.set(alarm.accident());
+                                                } catch (IOException e) {
+                                                    Log.e("11111111", e.toString());
+                                                    e.printStackTrace();
                                                 }
                                             }
-                                        });
-                                    } catch (IOException e) {
-                                        Log.e("11111111", e.toString());
+                                        };
+                                        Log.e("상태", alarmThread.getState().toString());
+                                        if (alarmThread.getState() == Thread.State.NEW)
+                                            alarmThread.start();
+                                        try {
+                                            alarmThread.join();
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        if (accident.get()) {
+                                            Log.e("이준구", String.valueOf(accident.get()));
+                                            dialog();
+                                        }
+                                    } catch (Exception e) {
+
                                         e.printStackTrace();
+
                                     }
                                 }
-                            };
-                            alarmThread.start();
+                            }, 0, sleepSec, TimeUnit.SECONDS);
+
                             Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
                             Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
                             tMapView.setTMapPathIcon(start, end);
 
                             tMapView.zoomToTMapPoint(my_location, destination);
-
                             search.setVisibility(View.GONE);
                         }
                     }
@@ -306,12 +285,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 });
             }
         });
+
     }
 
 
     public void dialog() {
         ConstraintLayout alarm_dialog = (ConstraintLayout) findViewById(R.id.alarm_dialog);
         alarm_dialog.setVisibility(View.VISIBLE);
+
+        Log.e("들어갔냐", "햐");
 
         Button alarm_button_yes = (Button) findViewById(R.id.alarm_button_yes);
         alarm_button_yes.setOnClickListener(new View.OnClickListener() {
@@ -341,6 +323,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             public void onClick(View v) {
                 alarm_dialog.setVisibility(View.GONE);
                 alarming = false;
+                
             }
         });
     }
