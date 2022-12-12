@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private String des;
     private Alarm alarm;
 
+    private TMapPoint testiantion;
+
     private TMapPoint my_location;
     private TMapPoint destination;
 
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             }
             return;
         }
-        tMapGps.OpenGps();
+        //tMapGps.OpenGps();
 
         tMapView.setSightVisible(true);
 
@@ -128,7 +130,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
     @Override
     public void onLocationChange(Location location) {
-
         tMapView.setLocationPoint(location.getLongitude(), location.getLatitude());
         tMapView.setCenterPoint(location.getLongitude(), location.getLatitude());
 
@@ -139,7 +140,6 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
         Log.d("getCurrent_lat : ", "" + getCurrent_lat);
         Log.d("getCurrent_long : ", "" + getCurrent_long);
-
     }
 
     public void SearchDestination() {
@@ -271,11 +271,11 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                 Log.e("POI Name: ", item.getPOIName().toString());
                                 Log.e("Address: ", item.getPOIAddress().replace("null", ""));
                                 Log.e("Point: ", item.getPOIPoint().toString());
-
+                                testiantion = item.getPOIPoint();
                                 list.add(item.getPOIName());
 
                             }
-                            Log.e("asdasdasd : ", "" + adapter.getCount());
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -308,14 +308,36 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
                 HashMap pathInfo = new HashMap();
                 pathInfo.put("rStName", "충남대학교 정심화국제문화회관");
+//                pathInfo.put("rStlat", Double.toString(my_location.getLatitude()));
+//                pathInfo.put("rStlon", Double.toString(my_location.getLongitude()));
+//                pathInfo.put("rGoName", des);
+//                pathInfo.put("rGolat", Double.toString(destination.getLatitude()));
+//                pathInfo.put("rGolon", Double.toString(destination.getLongitude()));
                 pathInfo.put("rStlat", Double.toString(my_location.getLatitude()));
                 pathInfo.put("rStlon", Double.toString(my_location.getLongitude()));
                 pathInfo.put("rGoName", des);
-                pathInfo.put("rGolat", Double.toString(destination.getLatitude()));
-                pathInfo.put("rGolon", Double.toString(destination.getLongitude()));
+                pathInfo.put("rGolat", Double.toString(testiantion.getLatitude()));
+                pathInfo.put("rGolon", Double.toString(testiantion.getLongitude()));
                 pathInfo.put("type", "arrival");
                 Date currentTime = new Date();
-                tmapdata.findTimeMachineCarPath(pathInfo, currentTime, null, "00");
+                Log.e("이준구준구",pathInfo.toString()) ;
+                tmapdata.findPathDataWithType(TMapData.TMapPathType.PEDESTRIAN_PATH, my_location, testiantion, new TMapData.FindPathDataListenerCallback() {
+                    @Override
+                    public void onFindPathData(TMapPolyLine polyLine) {
+                        polyLine.setLineColor(Color.BLUE);
+                        tMapView.addTMapPath(polyLine);
+                        tPoints = polyLine.getLinePoint();
+                    }
+                });
+
+
+
+//                new Thread(() -> {
+//                    tmapdata.findTimeMachineCarPath(pathInfo, currentTime, null, "02");
+//                    Bitmap start = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_start);
+//                    Bitmap end = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.poi_end);
+//                    tMapView.setTMapPathIcon(start, end);
+//                }).start();
                 alarm_dialog.setVisibility(View.GONE);
                 stpe.schedule(new Runnable(){
                     public void run(){
