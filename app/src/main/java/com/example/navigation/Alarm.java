@@ -8,19 +8,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -36,8 +34,10 @@ public class Alarm {
     }
 
     public boolean accident() throws IOException {
+
         StringBuilder urlBuilder = new StringBuilder("http://www.utic.go.kr/guide/imsOpenData.do"); /*URL*/
-        urlBuilder.append("?" + URLEncoder.encode("key","UTF-8") + "=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*Service Key*/
+        urlBuilder.append("?" + URLEncoder.encode("key","UTF-8") + "=klJXl3fne6niJzEYZ3YC3MenAHxXJBvZaWQElXlDZKTI5HaNd8ZMWb9vv0XIsTQ"); /*Service Key*/
+//        urlBuilder.append("?" + URLEncoder.encode("key","UTF-8") + "=joqQEZdJV6jtlHRXFxCXZZ15xTpzfxMQIQmcK0ElMAe3deCmWv83I8Z93MoVVs"); /*Service Key*/
         URL url = new URL(urlBuilder.toString());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -67,26 +67,30 @@ public class Alarm {
             e.printStackTrace();
         }
 
-        for(Map<String,String> tmpMap : list) {
-            Log.e("길이", String.valueOf(list.size()));
-            list_x.add(tmpMap.get("locationDataX"));
-            list_y.add(tmpMap.get("locationDataY"));
-        }
+//        for(Map<String,String> tmpMap : list) {
+//            Log.e("길이", String.valueOf(list.size()));
+//            list_x.add(tmpMap.get("locationDataX"));
+//            list_y.add(tmpMap.get("locationDataY"));
+//        }
+        list_x.add(127.30567976);
+        list_y.add(36.37959235);
 
-            Log.e("x좌표", list_x.get(0).toString());
-            Log.e("y좌표", list_y.get(0).toString());
-
+        Log.e("x좌표", list_x.get(0).toString());
+        Log.e("y좌표", list_y.get(0).toString());
 
         return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
     }
 
     public boolean passAccident(double x, double y){
         for(TMapPoint p : saveRoutePoint){
-            if((x-0.00001) < p.getLatitude() && (x+0.00001) > p.getLatitude() && (y-0.00001) < p.getLongitude() && (y+0.00001) > p.getLongitude()){
+            Log.e("지나는 길 x", Double.toString(p.getLongitude()));
+            Log.e("지나는길 y", Double.toString(p.getLatitude()));
+            if((x-0.0001) < p.getLongitude() && (x+0.0001) > p.getLongitude() && (y-0.0001) < p.getLatitude() && (y+0.0001) > p.getLatitude()){
+                Log.e("ㅎㅇ", "사고");
                 return true;
             }
         }
-        return true;
+        return false;
     }
 
     public static List<HashMap<String, String>> getResultMap(String data) throws Exception {
