@@ -78,7 +78,8 @@ public class Alarm {
         Log.e("x좌표", list_x.get(0).toString());
         Log.e("y좌표", list_y.get(0).toString());
 
-        return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
+//        return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
+        return true;
     }
 
     public boolean passAccident(double x, double y){
