@@ -61,7 +61,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private TMapPoint destination;
 
     private ArrayList<TMapPoint> tPoints = null;
-    public boolean alarming = false;
+    public boolean alarming = true;
+
     public Thread alarmThread;
     AtomicBoolean accident;
 
@@ -209,7 +210,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                         Thread alarmThread = new Thread() {
                                             public void run() {
                                                 try {
-                                                    accident.set(alarm.accident());
+                                                    if(alarming)
+                                                        accident.set(alarm.accident());
                                                 } catch (IOException e) {
                                                     Log.e("11111111", e.toString());
                                                     e.printStackTrace();
@@ -292,8 +294,9 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     public void dialog() {
         ConstraintLayout alarm_dialog = (ConstraintLayout) findViewById(R.id.alarm_dialog);
         alarm_dialog.setVisibility(View.VISIBLE);
-
+        alarming = false;
         Log.e("들어갔냐", "햐");
+        ScheduledThreadPoolExecutor stpe = new ScheduledThreadPoolExecutor(1);
 
         Button alarm_button_yes = (Button) findViewById(R.id.alarm_button_yes);
         alarm_button_yes.setOnClickListener(new View.OnClickListener() {
@@ -304,15 +307,25 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                 my_location = tMapView.getLocationPoint();
 
                 HashMap pathInfo = new HashMap();
-                pathInfo.put("rStName", "출발지");
-                pathInfo.put("rStlat", my_location.getLatitude());
-                pathInfo.put("rStlon", my_location.getLongitude());
-                pathInfo.put("rGoName", "도착지");
-                pathInfo.put("rGolat", destination.getLatitude());
-                pathInfo.put("rGolon", destination.getLongitude());
+                pathInfo.put("rStName", "충남대학교 정심화국제문화회관");
+                pathInfo.put("rStlat", Double.toString(my_location.getLatitude()));
+                pathInfo.put("rStlon", Double.toString(my_location.getLongitude()));
+                pathInfo.put("rGoName", des);
+                pathInfo.put("rGolat", Double.toString(destination.getLatitude()));
+                pathInfo.put("rGolon", Double.toString(destination.getLongitude()));
                 pathInfo.put("type", "arrival");
                 Date currentTime = new Date();
                 tmapdata.findTimeMachineCarPath(pathInfo, currentTime, null, "00");
+                alarm_dialog.setVisibility(View.GONE);
+                stpe.schedule(new Runnable(){
+                    public void run(){
+                        try {
+                            alarming = true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 10, TimeUnit.SECONDS);
             }
         });
 
@@ -322,8 +335,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             @Override
             public void onClick(View v) {
                 alarm_dialog.setVisibility(View.GONE);
-                alarming = false;
-                
+                stpe.schedule(new Runnable(){
+                    public void run(){
+                        try {
+                            alarming = true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 3600, TimeUnit.SECONDS);
             }
         });
     }
