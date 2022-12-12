@@ -78,14 +78,14 @@ public class Alarm {
         Log.e("x좌표", list_x.get(0).toString());
         Log.e("y좌표", list_y.get(0).toString());
 
-//        return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
-        return true;
+        Log.e("이준구준구", ""+saveRoutePoint.size());
+        return passAccident(Double.parseDouble(list_x.get(0).toString()), Double.parseDouble(list_y.get(0).toString()));
     }
 
     public boolean passAccident(double x, double y){
         for(TMapPoint p : saveRoutePoint){
             Log.e("지나는 길 x", Double.toString(p.getLongitude()));
-            Log.e("지나는길 y", Double.toString(p.getLatitude()));
+            Log.e("지나는 길 y", Double.toString(p.getLatitude()));
             if((x-0.0001) < p.getLongitude() && (x+0.0001) > p.getLongitude() && (y-0.0001) < p.getLatitude() && (y+0.0001) > p.getLatitude()){
                 Log.e("ㅎㅇ", "사고");
                 return true;

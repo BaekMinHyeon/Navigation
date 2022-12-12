@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
     private Button searchbutton;
     private SearchAdapter adapter;      // 리스트뷰에 연결할 아답터
     private String des;
-    private Alarm alarm;
+    private Alarm alarm = null;
 
     private TMapPoint testiantion;
 
@@ -119,6 +119,14 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
             public void onClick(View v) {
                 tMapView.setTrackingMode(true);
                 tMapView.setSightVisible(true);
+            }
+        });
+
+        Button testButton = (Button) findViewById(R.id.test_button);
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog();
             }
         });
     }
@@ -211,7 +219,8 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
                                             public void run() {
                                                 try {
                                                     if(alarming)
-                                                        accident.set(alarm.accident());
+                                                        if(alarm != null)
+                                                            accident.set(alarm.accident());
                                                 } catch (IOException e) {
                                                     Log.e("11111111", e.toString());
                                                     e.printStackTrace();
@@ -308,20 +317,15 @@ public class MainActivity extends AppCompatActivity implements TMapGpsManager.on
 
                 HashMap pathInfo = new HashMap();
                 pathInfo.put("rStName", "충남대학교 정심화국제문화회관");
-//                pathInfo.put("rStlat", Double.toString(my_location.getLatitude()));
-//                pathInfo.put("rStlon", Double.toString(my_location.getLongitude()));
-//                pathInfo.put("rGoName", des);
-//                pathInfo.put("rGolat", Double.toString(destination.getLatitude()));
-//                pathInfo.put("rGolon", Double.toString(destination.getLongitude()));
                 pathInfo.put("rStlat", Double.toString(my_location.getLatitude()));
                 pathInfo.put("rStlon", Double.toString(my_location.getLongitude()));
                 pathInfo.put("rGoName", des);
-                pathInfo.put("rGolat", Double.toString(testiantion.getLatitude()));
-                pathInfo.put("rGolon", Double.toString(testiantion.getLongitude()));
+                pathInfo.put("rGolat", Double.toString(destination.getLatitude()));
+                pathInfo.put("rGolon", Double.toString(destination.getLongitude()));
                 pathInfo.put("type", "arrival");
                 Date currentTime = new Date();
                 Log.e("이준구준구",pathInfo.toString()) ;
-                tmapdata.findPathDataWithType(TMapData.TMapPathType.PEDESTRIAN_PATH, my_location, testiantion, new TMapData.FindPathDataListenerCallback() {
+                tmapdata.findPathDataWithType(TMapData.TMapPathType.PEDESTRIAN_PATH, my_location, destination, new TMapData.FindPathDataListenerCallback() {
                     @Override
                     public void onFindPathData(TMapPolyLine polyLine) {
                         polyLine.setLineColor(Color.BLUE);
